@@ -53,3 +53,15 @@ server {
 upstream backend {
     server 127.0.0.1:8082;
 }
+
+# D 加了个限流  1秒一次  一个ip一秒只能访问一次  触发这个： 503 Service Temporarily Unavailable
+limit_req_zone $binary_remote_addr zone=one:10m rate=1r/s;
+
+server {
+    listen 7081;
+    location / {
+    limit_req zone=one burst=2 nodelay;
+        default_type text/plain;
+            proxy_pass http://backend/;
+    }
+}
