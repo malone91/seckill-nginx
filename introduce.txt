@@ -1,0 +1,55 @@
+# 一开始搭建这个项目使用的时候，include的文件找不到的话，启动Nginx会找不到文件的错误；lua_package_path有误倒不会
+worker_processes 1;
+error_log logs/error.log error;
+events {
+	worker_connections 1024;
+}
+http {
+	lua_package_path "F:\code\crmes\seckill-nginx\lua\?.lua;;";
+	include F:\\code\\crmes\\seckill-nginx\\domain\\domain.com;
+}
+
+# A 一开始的的domain.com内容 浏览器访问返回文字
+server {
+    listen 7081;
+    location /sayHello {
+        default_type text/plain;
+            content_by_lua_block {
+                ngx.say("hello   melo!!!")
+            }
+    }
+}
+
+# B 然后增加upstream.conf文件
+worker_processes 1;
+error_log logs/error.log error;
+events {
+	worker_connections 1024;
+}
+http {
+	lua_package_path "F:\code\crmes\seckill-nginx\lua\?.lua;;";
+	include F:\\code\\crmes\\seckill-nginx\\domain\\domain.com;
+	include F:\\code\\crmes\\seckill-nginx\\config\\upstream.conf;
+}
+
+# C 打到自己的本地服务上 返回字符串 domain.com的配置如下   必须带上最后的斜杠
+server {
+    listen 7081;
+    location /sayHello {
+        default_type text/plain;
+            proxy_pass http://127.0.0.1:8082/;
+    }
+}
+
+# CC 或者替代C的配置，增加backend变量  打到本地的服务
+server {
+    listen 7081;
+    location /sayHello {
+        default_type text/plain;
+            proxy_pass http://backend/;
+    }
+}
+
+upstream backend {
+    server 127.0.0.1:8082;
+}
